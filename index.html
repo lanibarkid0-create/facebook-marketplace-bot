@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facebook Marketplace Bot - Web Interface</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; background: #f4f4f9; }
+        h1 { color: #1877f2; }
+        .card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        label { display: block; margin-top: 10px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { background: #1877f2; color: white; border: none; padding: 10px 20px; margin-top: 15px; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #165fe5; }
+        pre { background: #333; color: #fff; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+
+    <h1>Facebook Marketplace Bot Web Generator</h1>
+    
+    <div class="card">
+        <h3>1. Buat Data CSV (Items / Vehicles)</h3>
+        <label>Tipe Listing:</label>
+        <select id="listingType" onchange="toggleFields()">
+            <option value="items">Item</option>
+            <option value="vehicles">Vehicle</option>
+        </select>
+
+        <div id="itemFields">
+            <label>Title:</label>
+            <input type="text" id="title" value="Contoh Barang">
+            <label>Brand:</label>
+            <input type="text" id="brand" value="Contoh Brand">
+            <label>Category:</label>
+            <input type="text" id="category" value="Sports & Outdoors">
+            <label>Condition:</label>
+            <input type="text" id="condition" value="Used – good">
+        </div>
+
+        <div id="vehicleFields" style="display:none;">
+            <label>Vehicle Type:</label>
+            <input type="text" id="vehicleType" value="Motorcycle">
+            <label>Year:</label>
+            <input type="text" id="year" value="2016">
+            <label>Make:</label>
+            <input type="text" id="make" value="Kawasaki">
+            <label>Model:</label>
+            <input type="text" id="model" value="KX250F">
+            <label>Mileage:</label>
+            <input type="text" id="mileage" value="1250">
+            <label>Fuel Type:</label>
+            <input type="text" id="fuelType" value="Gasoline">
+        </div>
+
+        <label>Photos Folder Path:</label>
+        <input type="text" id="photosFolder" value="C:\Pictures\">
+        
+        <label>Photos Names (pisahkan dengan titik koma ;):</label>
+        <input type="text" id="photosNames" value="Photo 1.JPG; Photo 2.png">
+
+        <label>Price:</label>
+        <input type="text" id="price" value="2500">
+
+        <label>Description:</label>
+        <textarea id="description">Deskripsi contoh</textarea>
+
+        <label>Location:</label>
+        <input type="text" id="location" value="London, United Kingdom">
+
+        <label>Groups (pisahkan dengan titik koma ;):</label>
+        <input type="text" id="groups" value="Group 1; Group 2">
+
+        <button onclick="generateCSV()">Download CSV</button>
+    </div>
+
+    <div class="card">
+        <h3>2. Panduan Penggunaan Web & Bot</h3>
+        <p>Halaman web ini berfungsi untuk membantu Anda membuat file CSV dengan mudah tanpa salah format. File CSV yang di-download harus dimasukkan ke dalam folder <b>csvs/</b> pada proyek bot Anda.</p>
+        <p>Setelah itu jalankan perintah ini di terminal komputer Anda:</p>
+        <pre>python main.py</pre>
+    </div>
+
+    <script>
+        function toggleFields() {
+            let type = document.getElementById('listingType').value;
+            if (type === 'items') {
+                document.getElementById('itemFields').style.display = 'block';
+                document.getElementById('vehicleFields').style.display = 'none';
+            } else {
+                document.getElementById('itemFields').style.display = 'none';
+                document.getElementById('vehicleFields').style.display = 'block';
+            }
+        }
+
+        // Escape a single CSV field per RFC 4180 so values containing quotes,
+        // commas or newlines cannot break the row.
+        function csvField(value) {
+            const text = String(value == null ? '' : value);
+            return '"' + text.replace(/"/g, '""') + '"';
+        }
+
+        function csvRow(values) {
+            return values.map(csvField).join(',');
+        }
+
+        function generateCSV() {
+            let type = document.getElementById('listingType').value;
+            let lines = ["\uFEFF"];
+            let folder = document.getElementById('photosFolder').value;
+            let photos = document.getElementById('photosNames').value;
+            let price = document.getElementById('price').value;
+            let desc = document.getElementById('description').value;
+            let loc = document.getElementById('location').value;
+            let groups = document.getElementById('groups').value;
+
+            if (type === 'items') {
+                let title = document.getElementById('title').value;
+                let brand = document.getElementById('brand').value;
+                let cat = document.getElementById('category').value;
+                let cond = document.getElementById('condition').value;
+
+                lines.push(csvRow(['Title', 'Photos Folder', 'Photos Names', 'Price', 'Category', 'Condition', 'Brand', 'Description', 'Location', 'Groups']));
+                lines.push(csvRow([title, folder, photos, price, cat, cond, brand, desc, loc, groups]));
+
+                downloadFile(lines.join('\r\n'), 'items.csv');
+            } else {
+                let vType = document.getElementById('vehicleType').value;
+                let year = document.getElementById('year').value;
+                let make = document.getElementById('make').value;
+                let model = document.getElementById('model').value;
+                let mileage = document.getElementById('mileage').value;
+                let fuel = document.getElementById('fuelType').value;
+
+                lines.push(csvRow(['Photos Folder', 'Photos Names', 'Vehicle Type', 'Year', 'Make', 'Model', 'Mileage', 'Fuel Type', 'Price', 'Description', 'Location', 'Groups']));
+                lines.push(csvRow([folder, photos, vType, year, make, model, mileage, fuel, price, desc, loc, groups]));
+
+                downloadFile(lines.join('\r\n'), 'vehicles.csv');
+            }
+        }
+
+        function downloadFile(content, filename) {
+            // A Blob keeps '#', '&', '?' and other reserved characters intact;
+            // encoding them into a data: URL corrupts the CSV.
+            const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

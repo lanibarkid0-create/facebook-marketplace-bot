@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="id">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="color-scheme" content="light">
+	<title>Marketplace Bot — Panel Lokal</title>
+	<style>
+		:root {
+			font-family: Inter, "Segoe UI", Arial, sans-serif;
+			color: #14213d;
+			background: #f4f7fb;
+			font-synthesis: none;
+		}
+		* { box-sizing: border-box; }
+		body { margin: 0; min-width: 320px; }
+		header {
+			padding: 24px max(24px, calc((100% - 1040px) / 2));
+			background: #fff;
+			border-bottom: 1px solid #e3eaf3;
+		}
+		.brand { display: flex; align-items: center; gap: 13px; }
+		.mark {
+			display: grid; place-items: center; width: 42px; height: 42px;
+			border-radius: 13px; background: #1877f2; color: white;
+			font-weight: 800; font-size: 21px;
+		}
+		h1 { margin: 0; font-size: 19px; letter-spacing: -.3px; }
+		header p { margin: 4px 0 0; color: #748198; font-size: 13px; }
+		main { max-width: 1040px; margin: 34px auto; padding: 0 24px 44px; }
+		.intro { margin-bottom: 24px; }
+		.eyebrow { color: #1877f2; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+		h2 { margin: 7px 0 8px; font-size: clamp(25px, 4vw, 34px); letter-spacing: -1px; }
+		.intro p { max-width: 650px; margin: 0; color: #66748b; line-height: 1.6; }
+		.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+		.card { padding: 23px; background: white; border: 1px solid #e5ebf3; border-radius: 16px; box-shadow: 0 8px 28px #1d35570a; }
+		.card h3 { margin: 0 0 8px; font-size: 16px; }
+		.subtle { color: #748198; font-size: 13px; line-height: 1.55; }
+		.status { display: flex; align-items: center; gap: 9px; margin: 18px 0; font-weight: 700; }
+		.dot { width: 10px; height: 10px; border-radius: 50%; background: #a0aec0; }
+		.dot.running { background: #16a36a; box-shadow: 0 0 0 4px #16a36a1c; }
+		.dot.warning { background: #de8a16; }
+		.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+		button, .link-button {
+			display: inline-flex; align-items: center; justify-content: center;
+			min-height: 42px; padding: 0 16px; border: 0; border-radius: 9px;
+			background: #1877f2; color: #fff; font: inherit; font-size: 14px;
+			font-weight: 700; text-decoration: none; cursor: pointer;
+		}
+		button.secondary, .link-button.secondary { color: #26344d; background: #edf2f8; }
+		button.danger { color: #b42318; background: #fff0ee; }
+		button:disabled { opacity: .55; cursor: not-allowed; }
+		.notice { margin-top: 16px; padding: 11px 13px; border-radius: 9px; background: #f2f6fc; color: #56657e; font-size: 13px; line-height: 1.5; }
+		.notice.error { background: #fff0ee; color: #a32c21; }
+		.files { display: grid; gap: 11px; margin-top: 18px; }
+		.file-row { display: flex; justify-content: space-between; gap: 12px; color: #52617a; font-size: 14px; }
+		.file-row strong { color: #192943; }
+		.logs { grid-column: 1 / -1; }
+		.log-box {
+			height: 245px; overflow: auto; margin-top: 14px; padding: 14px;
+			border-radius: 10px; background: #111a2b; color: #d8e3f4;
+			font: 12px/1.65 ui-monospace, Consolas, monospace; white-space: pre-wrap;
+			overflow-wrap: anywhere;
+		}
+		.log-empty { color: #92a0b5; }
+		footer { margin-top: 23px; color: #7a879a; font-size: 12px; line-height: 1.6; }
+		@media (max-width: 700px) {
+			header { padding: 18px 20px; }
+			main { margin-top: 24px; padding: 0 16px 32px; }
+			.grid { grid-template-columns: 1fr; }
+			.logs { grid-column: auto; }
+		}
+	</style>
+</head>
+<body>
+	<header>
+		<div class="brand">
+			<div class="mark" aria-hidden="true">M</div>
+			<div>
+				<h1>Marketplace Bot</h1>
+				<p>Panel kontrol lokal</p>
+			</div>
+		</div>
+	</header>
+	<main>
+		<section class="intro">
+			<div class="eyebrow">Berjalan di perangkat Anda</div>
+			<h2>Kelola proses publikasi</h2>
+			<p>Panel ini mengontrol bot di komputer ini. Sesi Facebook, foto, dan berkas CSV tetap berada di perangkat Anda.</p>
+		</section>
+		<div class="grid">
+			<section class="card">
+				<h3>Status bot</h3>
+				<p class="subtle">Proses akan membuka Chrome dan menggunakan sesi Facebook yang tersimpan di komputer ini.</p>
+				<div class="status" aria-live="polite">
+					<span id="statusDot" class="dot"></span>
+					<span id="statusText">Memeriksa status…</span>
+				</div>
+				<div class="actions">
+					<button id="startButton" type="button" disabled>Jalankan CSV lama</button>
+					<button id="stopButton" class="danger" type="button" disabled>Hentikan</button>
+					<a class="link-button secondary" href="/generator">Pembuat CSV</a>
+				</div>
+				<div class="notice" id="skipCheckRow">
+						<label for="skipCheck"><input id="skipCheck" type="checkbox">
+							Terbitkan langsung tanpa mencari listing yang sudah ada (lebih cepat, tapi bisa membuat duplikat)</label>
+					</div>
+					<div id="notice" class="notice" role="status">Pastikan data listing dan foto di folder proyek sudah siap.</div>
+			</section>
+			<section class="card">
+				<h3>Data lokal</h3>
+				<p class="subtle">Jumlah baris yang disiapkan untuk diproses oleh bot.</p>
+				<div class="files">
+					<div class="file-row"><span>Items</span><strong id="itemsCount">—</strong></div>
+					<div class="file-row"><span>Vehicles</span><strong id="vehiclesCount">—</strong></div>
+					<div class="file-row"><span>Sesi Facebook</span><strong id="cookieStatus">—</strong></div>
+				</div>
+			</section>
+			<section class="card logs">
+				<h3>Log aktivitas</h3>
+				<p class="subtle">Pesan terbaru dari proses bot. Log hanya disimpan sementara selama panel berjalan.</p>
+				<div id="logs" class="log-box" aria-live="polite"><span class="log-empty">Belum ada log.</span></div>
+			</section>
+		</div>
+		<footer>
+			Panel ini hanya tersedia di komputer lokal melalui <code>127.0.0.1</code>; panel bukan situs publik.
+			Jangan membagikan berkas cookie Facebook atau mengizinkan orang lain mengendalikan sesi browser Anda.
+		</footer>
+	</main>
+	<script>
+		const statusDot = document.getElementById('statusDot');
+		const statusText = document.getElementById('statusText');
+		const notice = document.getElementById('notice');
+		const startButton = document.getElementById('startButton');
+		const stopButton = document.getElementById('stopButton');
+		const logs = document.getElementById('logs');
+		const skipCheckBox = document.getElementById('skipCheck');
+
+		function setNotice(message, isError = false) {
+			notice.textContent = message;
+			notice.classList.toggle('error', isError);
+		}
+
+		async function refreshStatus() {
+			try {
+				const response = await fetch('/api/status', { cache: 'no-store' });
+				const data = await response.json();
+				if (!response.ok) throw new Error(data.error || 'Status bot tidak dapat dibaca.');
+
+				document.getElementById('itemsCount').textContent = `${data.items_count} listing`;
+				document.getElementById('vehiclesCount').textContent = `${data.vehicles_count} listing`;
+				document.getElementById('cookieStatus').textContent = data.has_cookie ? 'Tersedia' : 'Belum ada';
+
+				statusDot.classList.toggle('running', data.running);
+				statusDot.classList.toggle('warning', !data.running && data.external_processes.length > 0);
+				if (data.running) {
+					statusText.textContent = `Berjalan · PID ${data.pid}`;
+					setNotice('Bot sedang bekerja. Jangan tutup Chrome selama proses berjalan.');
+				} else if (data.external_processes.length) {
+					statusText.textContent = 'Bot berjalan di luar panel';
+					setNotice(`Proses main.py terdeteksi (PID ${data.external_processes.join(', ')}). Tunggu sampai selesai sebelum menjalankan dari panel.`);
+				} else if (data.exit_code !== null) {
+					statusText.textContent = `Selesai · kode ${data.exit_code}`;
+				} else {
+					statusText.textContent = 'Siap dijalankan';
+				}
+				startButton.disabled = data.running || data.external_processes.length > 0;
+				stopButton.disabled = !data.running;
+				logs.textContent = data.logs.length ? data.logs.join('\n') : 'Belum ada log.';
+				logs.scrollTop = logs.scrollHeight;
+			} catch (error) {
+				statusText.textContent = 'Panel tidak dapat terhubung';
+				setNotice(error.message, true);
+				startButton.disabled = true;
+				stopButton.disabled = true;
+			}
+		}
+
+		startButton.addEventListener('click', async () => {
+			startButton.disabled = true;
+			try {
+				const body = JSON.stringify({ skip_existing_check: skipCheckBox.checked });
+				const response = await fetch('/api/start', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body
+				});
+				const data = await response.json();
+				if (!response.ok) throw new Error(data.error || 'Bot tidak dapat dijalankan.');
+				setNotice(`Bot dimulai (PID ${data.pid}).`);
+			} catch (error) {
+				setNotice(error.message, true);
+			}
+			await refreshStatus();
+		});
+
+		stopButton.addEventListener('click', async () => {
+			if (!confirm('Hentikan bot sekarang? Listing yang sedang diproses mungkin belum selesai.')) return;
+			stopButton.disabled = true;
+			try {
+				const response = await fetch('/api/stop', { method: 'POST' });
+				const data = await response.json();
+				if (!response.ok) throw new Error(data.error || 'Bot tidak dapat dihentikan.');
+				setNotice(data.stopping ? 'Sinyal berhenti dikirim. Chrome akan ditutup setelah proses merapikan sesi.' : 'Bot sudah berhenti.');
+			} catch (error) {
+				setNotice(error.message, true);
+			}
+			await refreshStatus();
+		});
+
+		refreshStatus();
+		window.setInterval(refreshStatus, 3000);
+	</script>
+</body>
+</html>
